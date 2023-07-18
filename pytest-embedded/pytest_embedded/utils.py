@@ -4,6 +4,7 @@ import importlib
 import logging
 import os
 import re
+import shelve
 import typing as t
 
 if t.TYPE_CHECKING:
