@@ -1,11 +1,13 @@
 import contextlib
 import datetime
+import dbm
 import functools
 import importlib
 import io
 import logging
 import multiprocessing
 import os
+import shelve
 import subprocess
 import sys
 import tempfile
@@ -102,6 +104,8 @@ def pytest_addoption(parser):
 
     # supports parametrization
     base_group.addoption('--root-logdir', help='set session-based root log dir. (Default: system temp folder)')
+    base_group.addoption('--cache-dir', help='set root cache-dir for storing cache files. \n'
+                                             '(Default: system temp folder)')
     base_group.addoption(
         '--embedded-services',
         default='',
@@ -528,9 +532,39 @@ def session_tempdir(session_root_logdir) -> str:
 
 
 @pytest.fixture(scope='session')
-def port_target_cache() -> t.Dict[str, str]:
+def cache_dir(request: FixtureRequest) -> str:
+    """Cache dir for pytest-embedded"""
+    _cache_root_dir = os.path.realpath(
+        _request_param_or_config_option_or_default(request, 'cache_dir', tempfile.gettempdir())
+    )
+    _cache_work_dir = os.path.join(
+        _cache_root_dir,
+        "pytest-embedded",
+        "pytest-embedded-cache"
+    )
+    os.makedirs(_cache_work_dir, exist_ok=True)
+    return _cache_work_dir
+
+
+@pytest.fixture(scope='session')
+def port_target_cache(cache_dir) -> t.Dict[str, str]:
     """Session scoped port-target cache, for esp only"""
-    return {}
+    _cache_file_path = os.path.join(
+        cache_dir,
+        "port_target_cache"
+    )
+    resp: dict[str, str] = {}
+    try:
+        with shelve.open(_cache_file_path) as f:
+            resp = dict(f)
+    except dbm.error:
+        os.remove(_cache_file_path)
+
+    yield resp
+
+    with shelve.open(_cache_file_path) as f:
+        for k, v in resp.items():
+            f[k] = v
 
 
 @pytest.fixture(scope='session')
