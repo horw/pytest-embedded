@@ -55,3 +55,17 @@ def test_detect_port_with_cache(testdir, caplog, first_index_of_messages):
     first_index_of_messages(
         re.compile('^hit port-target cache: .+ - esp32$', re.MULTILINE), caplog.messages, esp32s2_hit_cache_index + 1
     )
+
+
+def test_auto_target_detection(testdir):
+    testdir.makepyfile(
+        """
+        def test_auto_target_detection_without_auto_arg(dut):
+            pass
+        """
+    )
+    result = testdir.runpytest(
+        '-s',
+        '--embedded-services', 'esp',
+    )
+    result.assert_outcomes(passed=1)
