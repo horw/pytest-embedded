@@ -498,11 +498,11 @@ class LoopedDevWorker:
 
     def wait_for_result(self) -> None:
         self.task_complete_event.wait()
-        res: t.Tuple[str, dict] | Exception = self.rp.returned_value
+        res: t.Tuple[str, t.Dict] | Exception = self.rp.returned_value
         self.task_complete_event.clear()
         self.rp.raw_data_to_report = res
 
-    def process_raw_data_to_report(self) -> dict:
+    def process_raw_data_to_report(self) -> t.Dict:
         additional_attrs = {}
         if isinstance(self.rp.raw_data_to_report, tuple) and len(self.rp.raw_data_to_report) == 2:
             log = str(self.rp.raw_data_to_report[0])
@@ -546,7 +546,7 @@ class LoopedDevWorker:
         return attrs
 
     @staticmethod
-    def merge_result(test_cases_attr: list[dict]) -> dict:
+    def merge_result(test_cases_attr: t.List[t.Dict]) -> t.Dict:
         output = {}
         results = set()
         time_attr = 0.0
@@ -594,7 +594,7 @@ class LoopedDevWorker:
         else:
             self.rp.dut.testsuite.attrs['tests'] += 1
 
-    def clear_var_values(self):
+    def clear_var_values(self) -> None:
         self.rp.recv_sig.clear()
         self.rp.returned_value = None
 
