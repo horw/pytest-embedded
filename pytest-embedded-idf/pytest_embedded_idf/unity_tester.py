@@ -416,7 +416,7 @@ class IdfUnityDutMixin:
                         self._run_multi_stage_case(case, reset=reset, timeout=timeout)
 
 
-class MultiDevTestDut:
+class _MultiDevTestDut:
     """
     Dut control for multidevice test case
     """
@@ -455,7 +455,7 @@ class MultiDevTestDut:
 
         self.work = self.run_case()
         self.init_time = time.perf_counter()
-        self.response: MultiDevTestDut.DevResponse = MultiDevTestDut.DevResponse(False, None)
+        self.response: _MultiDevTestDut.DevResponse = _MultiDevTestDut.DevResponse(False, None)
 
     def __iter__(self):
         return self.work
@@ -467,10 +467,10 @@ class MultiDevTestDut:
             try:
                 next(self.__iter__())
             except StopIteration as e:
-                self.response = MultiDevTestDut.DevResponse(True, e.value)
+                self.response = _MultiDevTestDut.DevResponse(True, e.value)
                 self.work.close()
             except TIMEOUT as e:
-                self.response = MultiDevTestDut.DevResponse(True, e)
+                self.response = _MultiDevTestDut.DevResponse(True, e)
                 self.work.close()
         return self.response
 
@@ -615,7 +615,7 @@ class MultiDevRunTestManager:
 
     def __init__(self, duts, case, start_retry, wait_for_menu_timeout, runtest_timeout):
         self.case = case
-        self.workers: t.List[MultiDevTestDut] = []
+        self.workers: t.List[_MultiDevTestDut] = []
         shared_query = [[] for _ in case.subcases]
         for sub_case in case.subcases:
             index: int
@@ -625,7 +625,7 @@ class MultiDevRunTestManager:
                 index = sub_case['index']
 
             self.workers.append(
-                MultiDevTestDut(
+                _MultiDevTestDut(
                     dut=duts[index - 1],
                     case=case,
                     sub_case_index=index,
@@ -682,12 +682,15 @@ class MultiDevRunTestManager:
                     continue
 
                 if k not in output:
-                    output[k] = [f'[group dev-{ind}]: {val}']
+                    output[k] = [f'[dut-{ind}]: {val}']
                 else:
-                    output[k].append(f'[group dev-{ind}]: {val}')
+                    output[k].append(f'[dut-{ind}]: {val}')
 
         for k, val in output.items():
-            output[k] = '<------------------->\n'.join(output[k])
+            if k in ('file', 'line'):
+                output[k] = val[0]
+            else:
+                output[k] = '<------------------->\n'.join(val)
 
         output['time'] = time_attr
         output['name'] = ' <---> '.join(list(name_attr))
