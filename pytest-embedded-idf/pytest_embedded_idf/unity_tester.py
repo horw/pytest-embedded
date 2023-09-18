@@ -779,6 +779,34 @@ class CaseTester:
         merged_data = mdm.get_merge_data(data_to_report)
         mdm.add_report_to_first_dut(merged_data)
 
+    def run_normal_case(self, case: UnittestMenuCase, reset: bool = False, timeout: int = 90) -> None:
+        """
+        Run a specific normal case
+
+        Notes:
+            Will skip if the case type is not normal
+
+        Args:
+            case: the specific case that parsed in test menu
+            reset: whether do a hardware reset before running the case
+            timeout: timeout in second
+        """
+        self.first_dut._run_normal_case(case, reset, timeout=timeout)
+
+    def run_multi_stage_case(self, case: UnittestMenuCase, reset: bool = False, timeout: int = 90) -> None:
+        """
+        Run a specific multi_stage case
+
+        Notes:
+            Will skip if the case type is not multi_stage
+
+        Args:
+            case: the specific case that parsed in test menu
+            reset: whether do a hardware reset before running the case
+            timeout: timeout in second
+        """
+        self.first_dut._run_multi_stage_case(case, reset=reset, timeout=timeout)
+
     def run_all_normal_cases(self, reset: bool = False, timeout: int = 90) -> None:
         """
         Run all normal cases
@@ -788,7 +816,7 @@ class CaseTester:
             timeout: timeout in second
         """
         for case in self.test_menu:
-            self.first_dut._run_normal_case(case, reset, timeout=timeout)
+            self.run_normal_case(case, reset, timeout=timeout)
 
     def run_all_multi_stage_cases(self, reset: bool = False, timeout: int = 90) -> None:
         """
@@ -799,7 +827,7 @@ class CaseTester:
             timeout: timeout in second
         """
         for case in self.test_menu:
-            self.first_dut._run_multi_stage_case(case, reset=reset, timeout=timeout)
+            self.run_multi_stage_case(case, reset=reset, timeout=timeout)
 
     def run_all_multi_dev_cases(
         self,
