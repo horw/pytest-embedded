@@ -271,6 +271,7 @@ class IdfUnityDutMixin:
                         _timeout = 0
                     self.expect(UNITY_SUMMARY_LINE_REGEX, timeout=_timeout)
                 except Exception:  # result block missing # noqa
+                    self._hard_reset_func()
                     pass
                 else:  # result block exists
                     _log = remove_asci_color_code(self.pexpect_proc.before)
