@@ -247,6 +247,10 @@ class IdfUnityDutMixin:
             _timeout = kwargs.get('timeout', 30)
             _case = args[0]
 
+            if _case.type not in func.__name__:
+                logging.warning('The %s case can\'t be executed with %s function.', _case.type, func.__name__)
+                return
+
             try:
                 # do it here since the first hard reset before test case shouldn't be counted in duration time
                 if 'reset' in kwargs:
@@ -774,6 +778,28 @@ class CaseTester:
         data_to_report = mdm.get_processed_report_data(res)
         merged_data = mdm.get_merge_data(data_to_report)
         mdm.add_report_to_first_dut(merged_data)
+
+    def run_all_normal_cases(self, reset: bool = False, timeout: int = 90) -> None:
+        """
+        Run all normal cases
+
+        Args:
+            reset: whether do a hardware reset before running the case
+            timeout: timeout in second
+        """
+        for case in self.test_menu:
+            self.first_dut._run_normal_case(case, reset, timeout=timeout)
+
+    def run_all_multi_stage_cases(self, reset: bool = False, timeout: int = 90) -> None:
+        """
+        Run all multi_stage cases
+
+        Args:
+            reset: whether do a hardware reset before running the case
+            timeout: timeout in second
+        """
+        for case in self.test_menu:
+            self.first_dut._run_multi_stage_case(case, reset=reset, timeout=timeout)
 
     def run_all_multi_dev_cases(
         self,
