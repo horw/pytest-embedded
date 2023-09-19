@@ -483,12 +483,12 @@ class _MultiDevTestDut:
         self.work.close()
 
     def run_case(self):
-        yield from self.expect_exact(READY_PATTERN_LIST, self.wait_for_menu_timeout)
+        yield from self._expect_exact(READY_PATTERN_LIST, self.wait_for_menu_timeout)
 
         for retry in range(self.start_retry):
             self.dut.write(str(self.case.index))
             try:
-                yield from self.expect_exact(self.case.name, 1)
+                yield from self._expect_exact(self.case.name, 1)
                 break
             except TIMEOUT as e:
                 if retry >= self.start_retry - 1:
@@ -503,7 +503,7 @@ class _MultiDevTestDut:
             if _timeout < 0:
                 raise TIMEOUT('Tasks timed out, without other exception')
 
-            pat = yield from self.expect(self.signal_pattern_list, _timeout)
+            pat = yield from self._expect(self.signal_pattern_list, _timeout)
 
             if pat is not None:
                 match_str = pat.group().decode('utf-8')
@@ -536,7 +536,7 @@ class _MultiDevTestDut:
                     log = remove_asci_color_code(self.dut.pexpect_proc.before)
                     return log, additional_attrs
 
-    def expect_exact(self, pattern, timeout):
+    def _expect_exact(self, pattern, timeout):
         start = time.perf_counter()
         while True:
             try:
@@ -547,7 +547,7 @@ class _MultiDevTestDut:
                 if time.perf_counter() - start > timeout:
                     raise e
 
-    def expect(self, pattern, timeout):
+    def _expect(self, pattern, timeout):
         start = time.perf_counter()
         while True:
             try:
