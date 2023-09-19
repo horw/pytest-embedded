@@ -254,7 +254,7 @@ class IdfUnityDutMixin:
             try:
                 # do it here since the first hard reset before test case shouldn't be counted in duration time
                 if 'reset' in kwargs:
-                    if kwargs.pop('reset') and self._hard_reset_func:
+                    if kwargs.get('reset') and self._hard_reset_func:
                         try:
                             self._hard_reset_func()
                         except NotImplementedError:
@@ -271,7 +271,6 @@ class IdfUnityDutMixin:
                         _timeout = 0
                     self.expect(UNITY_SUMMARY_LINE_REGEX, timeout=_timeout)
                 except Exception:  # result block missing # noqa
-                    self._hard_reset_func()
                     pass
                 else:  # result block exists
                     _log = remove_asci_color_code(self.pexpect_proc.before)
@@ -327,6 +326,7 @@ class IdfUnityDutMixin:
     def _run_normal_case(
         self,
         case: UnittestMenuCase,
+        *,
         reset: bool = False,  # noqa
         timeout: float = 30,
     ) -> None:
@@ -352,6 +352,7 @@ class IdfUnityDutMixin:
     def _run_multi_stage_case(
         self,
         case: UnittestMenuCase,
+        *,
         reset: bool = False,  # noqa
         timeout: float = 30,
     ) -> None:
@@ -792,7 +793,7 @@ class CaseTester:
             reset: whether do a hardware reset before running the case
             timeout: timeout in second
         """
-        self.first_dut._run_normal_case(case, reset, timeout=timeout)
+        self.first_dut._run_normal_case(case, reset=reset, timeout=timeout)
 
     def run_multi_stage_case(self, case: UnittestMenuCase, reset: bool = False, timeout: int = 90) -> None:
         """
