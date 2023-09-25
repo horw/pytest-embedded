@@ -244,41 +244,41 @@ class IdfUnityDutMixin:
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             _start_at = time.perf_counter()  # declare here in case hard reset failed
-            _timeout = kwargs.get('timeout', 30)
             _case = args[0]
+            kwargs['timeout'] = int(_case.attributes.get('timeout', kwargs.get('timeout', DEFAULT_TIMEOUT)))
+            _timeout = int(kwargs['timeout'])
+            _log = ''
 
             if _case.type not in func.__name__:
                 logging.warning('The %s case can\'t be executed with %s function.', _case.type, func.__name__)
                 return
 
-            try:
+            max_retries_limit = int(_case.attributes.get('retry', 1))
+            reset = kwargs.get('reset', False)
+            for i in range(max_retries_limit):
                 # do it here since the first hard reset before test case shouldn't be counted in duration time
-                if 'reset' in kwargs:
-                    if kwargs.get('reset') and self._hard_reset_func:
-                        try:
-                            self._hard_reset_func()
-                        except NotImplementedError:
-                            self.write('\n')  # print the menu
+                if (reset or i != 0) and self._hard_reset_func:
+                    try:
+                        self._hard_reset_func()
+                    except NotImplementedError:
+                        self.write('\n')  # print the menu
 
-                _start_at = time.perf_counter()
-                func(self, *args, **kwargs)
-            finally:
-                _timestamp = time.perf_counter()
-                _log = ''
                 try:
+                    _start_at = time.perf_counter()
+                    func(self, *args, **kwargs)
+
+                    _timestamp = time.perf_counter()
                     _timeout = _timeout - _timestamp + _start_at
                     if _timeout < 0:  # pexpect process would expect 30s if < 0
                         _timeout = 0
                     self.expect(UNITY_SUMMARY_LINE_REGEX, timeout=_timeout)
-                except Exception:  # result block missing # noqa
-                    pass
-                else:  # result block exists
                     _log = remove_asci_color_code(self.pexpect_proc.before)
-                finally:
-                    _end_at = time.perf_counter()
-                    self._add_single_unity_test_case(
-                        _case, _log, additional_attrs={'time': round(_end_at - _start_at, 3)}
-                    )
+                    break
+                except TIMEOUT as e:
+                    logging.debug(f'retries: {i+1}/{max_retries_limit}, caught error: {e}')
+
+            _end_at = time.perf_counter()
+            self._add_single_unity_test_case(_case, _log, additional_attrs={'time': round(_end_at - _start_at, 3)})
 
         return wrapper
 
@@ -769,17 +769,28 @@ class CaseTester:
             )
             return
 
-        if reset:
-            for dut in self.dut:
-                dut.serial.hard_reset()
+        timeout = int(case.attributes.get('timeout', timeout))
+        max_retries_limit = int(case.attributes.get('retry', 1))
 
-        mdm = MultiDevRunTestManager(
-            duts=self.dut, case=case, start_retry=start_retry, wait_for_menu_timeout=timeout, runtest_timeout=timeout
-        )
-        res = mdm.gather()
-        data_to_report = mdm.get_processed_report_data(res)
-        merged_data = mdm.get_merge_data(data_to_report)
-        mdm.add_report_to_first_dut(merged_data)
+        for i in range(max_retries_limit):
+            if reset or i != 0:
+                for dut in self.dut:
+                    dut.serial.hard_reset()
+
+            mdm = MultiDevRunTestManager(
+                duts=self.dut, case=case, start_retry=start_retry, wait_for_menu_timeout=5, runtest_timeout=timeout
+            )
+
+            res = mdm.gather()
+            save_switch = False
+            if not sum([1 for r in res if isinstance(r, TIMEOUT)]) or i == max_retries_limit - 1:
+                save_switch = True
+
+            if save_switch:
+                data_to_report = mdm.get_processed_report_data(res)
+                merged_data = mdm.get_merge_data(data_to_report)
+                mdm.add_report_to_first_dut(merged_data)
+                break
 
     def run_normal_case(self, case: UnittestMenuCase, reset: bool = False, timeout: int = 90) -> None:
         """
@@ -887,9 +898,6 @@ class CaseTester:
             'Will be renamed and split into two time in future',
             DeprecationWarning,
         )
-
-        if case.attributes.get('timeout'):
-            timeout = int(case.attributes['timeout'])
 
         if case.type == 'normal':
             self.first_dut._run_normal_case(case, reset=reset, timeout=timeout)
