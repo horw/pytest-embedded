@@ -1,5 +1,6 @@
 """Make pytest-embedded plugin work with Arduino."""
 
+print('ALSO WAS IMPORTED')
 import importlib
 
 from pytest_embedded.utils import lazy_load

@@ -1,3 +1,4 @@
+import os
 import typing as t
 
 from pytest_embedded.dut import Dut
@@ -28,6 +29,9 @@ class LinuxDut(Dut):
         self.serial.write(data)
 
 
+print('INIT LINUX SERIAL', os.getpid())
+
+
 class LinuxSerial(DuplicateStdoutPopen):
     """
     Linux serial Dut class
@@ -38,6 +42,7 @@ class LinuxSerial(DuplicateStdoutPopen):
         app: IdfApp,
         **kwargs,
     ) -> None:
+        print('linux serial init', os.getpid())
         self.app = app
 
         if not hasattr(self.app, 'target'):

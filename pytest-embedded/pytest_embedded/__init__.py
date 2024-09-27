@@ -1,5 +1,6 @@
 """A pytest plugin that designed for embedded testing."""
 
+print('THIS IS A ENTRY POINT')
 from .app import App
 from .dut import Dut
 from .dut_factory import DutFactory

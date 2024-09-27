@@ -2,6 +2,8 @@ import logging
 import os
 from typing import Optional
 
+print('IMPORT APP')
+
 
 class App:
     """

@@ -1,3 +1,4 @@
+print('PLUGGGIN')
 import argparse
 import contextlib
 import dbm
@@ -668,6 +669,10 @@ def msg_queue() -> MessageQueue:  # kwargs passed by `multi_dut_generator_fixtur
 def with_timestamp(request: FixtureRequest) -> bool:
     """Enable parametrization for the same cli option"""
     return _request_param_or_config_option_or_default(request, 'with_timestamp', None)
+
+
+print('implement listener', os.getpid())
+print('NAME IS ', __name__, os.getpid())
 
 
 @pytest.fixture

@@ -1,3 +1,4 @@
+print('ONLY ONCE')
 import datetime
 import gc
 import io
@@ -28,10 +29,7 @@ def _drop_none_kwargs(kwargs: t.Dict[t.Any, t.Any]):
     return {k: v for k, v in kwargs.items() if v is not None}
 
 
-if sys.platform == 'darwin':
-    _ctx = multiprocessing.get_context('fork')
-else:
-    _ctx = multiprocessing.get_context()
+_ctx = multiprocessing.get_context('spawn')
 
 _stdout = sys.__stdout__
 
@@ -47,6 +45,9 @@ PARAMETRIZED_FIXTURES_CACHE = {}
 
 def msg_queue_gn() -> MessageQueue:
     return MessageQueue()
+
+
+print('DO YOU KNOW ME? ', os.getpid(), datetime.datetime.now().timestamp())
 
 
 def _listen(q: MessageQueue, filepath: str, with_timestamp: bool = True, count: int = 1, total: int = 1) -> None:
@@ -96,7 +97,7 @@ def _listener_gn(msg_queue, _pexpect_logfile, with_timestamp, dut_index, dut_tot
         'count': dut_index,
         'total': dut_total,
     }
-
+    print('CREATE LISTENER GN ', os.getpid(), datetime.datetime.now().timestamp())
     return _ctx.Process(
         target=_listen,
         args=(

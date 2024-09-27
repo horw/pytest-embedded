@@ -1,9 +1,9 @@
+import datetime
 import errno
 import logging
 import multiprocessing
 import os
 import subprocess
-import sys
 import tempfile
 import textwrap
 import uuid
@@ -16,10 +16,8 @@ from pexpect.utils import poll_ignore_interrupts, select_ignore_interrupts
 
 from .utils import Meta, remove_asci_color_code, to_bytes, to_str, utcnow_str
 
-if sys.platform == 'darwin':
-    _ctx = multiprocessing.get_context('fork')
-else:
-    _ctx = multiprocessing.get_context()
+_ctx = multiprocessing.get_context('spawn')
+print('HELLO BRO ', os.getpid())
 
 
 class MessageQueue(queues.Queue):
@@ -157,6 +155,9 @@ class _PopenRedirectProcess(_ctx.Process):
                 self._q.put(fr.read())
 
 
+print('DUPLICATE STOOUT POPEN ', os.getpid())
+
+
 class DuplicateStdoutPopen(subprocess.Popen):
     """
     Subclass of `subprocess.Popen` that redirect the output into the `MessageQueue` instance
@@ -196,6 +197,7 @@ class DuplicateStdoutPopen(subprocess.Popen):
 
         self._cmd = cmd
         logging.info('Executing %s', ' '.join(cmd) if isinstance(cmd, list) else cmd)
+        print('CREATE PROCESS GN ', ''.join(cmd), os.getpid(), datetime.datetime.now().timestamp())
         super().__init__(cmd, **kwargs)
 
         # some sub classes does not need to redirect to the message queue, they use blocking-IO instead and

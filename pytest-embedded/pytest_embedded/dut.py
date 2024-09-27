@@ -1,3 +1,4 @@
+print('IMPORT DUT')
 import functools
 import logging
 import multiprocessing
